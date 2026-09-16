@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Versa Studios — Pre-Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f5f5f3; font-family: Arial, sans-serif;
+      min-height: 100vh; padding: 0 0 60px;
+    }
+    #header {
+      background: #1a1a1a; padding: 20px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    #header img { height: 40px; display: block; }
+    #header h1 { color: white; font-family: 'Bebas Neue', Arial, sans-serif; font-size: 24px; letter-spacing: 0.05em; }
+    #container { max-width: 600px; margin: 0 auto; padding: 28px 20px; }
+
+    /* Steps */
+    #steps { display: flex; gap: 8px; margin-bottom: 28px; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: #ddd; transition: background 0.3s; }
+    .step.active { background: #1a1a1a; }
+    .step.done { background: #4CAF50; }
+
+    /* Cards */
+    .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    .card h2 { font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
+    .card p { font-size: 14px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+
+    /* Form */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 6px; }
+    .field input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: border-color 0.2s; }
+    .field input:focus { border-color: #1a1a1a; }
+    .field input.error { border-color: #c00; }
+    .required { color: #c00; }
+
+    /* NDA */
+    #ndaBox {
+      background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px;
+      padding: 20px; height: 360px; overflow-y: auto;
+      font-size: 13px; line-height: 1.8; color: #333;
+      white-space: pre-wrap; margin-bottom: 16px;
+      font-family: 'Georgia', serif;
+    }
+    #ndaBox h3 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+    #ndaBox .nda-sub { text-align: center; font-size: 13px; color: #666; margin-bottom: 20px; }
+    #scrollMsg { font-size: 13px; color: #888; text-align: center; margin-bottom: 12px; }
+    #agreeRow { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+    #agreeRow input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+    #agreeRow label { font-size: 14px; color: #333; line-height: 1.5; cursor: pointer; }
+
+    /* Signature */
+    .sig-field { margin-bottom: 16px; }
+    .sig-field label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 6px; }
+    .sig-field input {
+      width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px;
+      font-size: 22px; font-family: 'Georgia', cursive; outline: none;
+      transition: border-color 0.2s; color: #1a1a1a;
+    }
+    .sig-field input:focus { border-color: #1a1a1a; }
+    .sig-note { font-size: 12px; color: #aaa; margin-top: 6px; }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%; padding: 16px; font-size: 18px; font-weight: bold;
+      background: #1a1a1a; color: white; border: none; border-radius: 12px;
+      cursor: pointer; font-family: 'Bebas Neue', Arial, sans-serif;
+      letter-spacing: 0.05em; transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary:not(:disabled):active { opacity: 0.8; }
+    .btn-secondary {
+      width: 100%; padding: 14px; font-size: 15px;
+      background: transparent; color: #888; border: 2px solid #e0e0e0;
+      border-radius: 12px; cursor: pointer; margin-bottom: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #errorMsg { font-size: 14px; color: #c00; min-height: 1.2em; margin-bottom: 12px; text-align: center; }
+
+    /* Success */
+    #successScreen { display: none; text-align: center; padding: 40px 20px; }
+    #successScreen .tick { font-size: 72px; margin-bottom: 16px; }
+    #successScreen h2 { font-size: 28px; font-family: 'Bebas Neue', Arial; letter-spacing: 0.05em; margin-bottom: 8px; }
+    #successScreen p { font-size: 15px; color: #666; line-height: 1.6; }
+
+    /* Screen management */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <img src="Versa Logo.png" alt="Versa Studios">
+    <h1>Pre-Registration</h1>
+  </div>
+
+  <div id="container">
+    <div id="steps">
+      <div class="step active" id="step1"></div>
+      <div class="step" id="step2"></div>
+      <div class="step" id="step3"></div>
+    </div>
+
+    <!-- Screen 1: Details -->
+    <div class="screen active" id="screen1">
+      <div class="card">
+        <h2>Your Details</h2>
+        <p>Please fill in your information before arriving at the studio.</p>
+        <div class="field">
+          <label>Full Name <span class="required">*</span></label>
+          <input id="regName" type="text" placeholder="e.g. John Smith" autocapitalize="words">
+        </div>
+        <div class="field">
+          <label>Job Title <span class="required">*</span></label>
+          <input id="regJob" type="text" placeholder="e.g. Camera Operator" autocapitalize="words">
+        </div>
+        <div class="field">
+          <label>Company</label>
+          <input id="regCompany" type="text" placeholder="e.g. BBC" autocapitalize="words">
+        </div>
+        <div class="field">
+          <label>Email Address <span class="required">*</span></label>
+          <input id="regEmail" type="email" placeholder="e.g. john@example.com" inputmode="email">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input id="regPhone" type="tel" placeholder="e.g. 07700 900000" inputmode="tel">
+        </div>
+        <div id="errorMsg"></div>
+        <button class="btn-primary" onclick="goToNDA()">Continue</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: NDA -->
+    <div class="screen" id="screen2">
+      <div class="card">
+        <h2>Confidentiality Agreement</h2>
+        <p>Please read the full agreement carefully before signing.</p>
+        <div id="ndaBox">
+<b>VERSA STUDIOS</b>
+<b>Visitor Confidentiality Acknowledgement</b>
+
+Company: Versa London Studios Limited
+Studio Location: Versa London Studios, 6 Atherton Street, London, M3 3GS
+
+<b>1. Purpose of this Acknowledgement</b>
+
+1.1 This Visitor Confidentiality Acknowledgement ("Acknowledgement") applies to all visitors to the Company's studios. Its purpose is to ensure that any confidential or sensitive information seen, heard, or otherwise encountered during the visit is protected.
+
+1.2 By signing below, the Visitor confirms they understand and agree to the terms set out in this Acknowledgement.
+
+<b>2. Confidential Information</b>
+
+2.1 "Confidential Information" includes any information relating to the Company's business, operations, clients, projects, creative content, technical processes, financial information, staff discussions, or any other information which is:
+(a) not publicly available; or
+(b) marked or described as confidential; or
+(c) which a reasonable person would understand to be confidential.
+
+2.2 Confidential Information may be communicated verbally, visually, in writing, electronically, or in any other form.
+
+<b>3. Visitor Obligations</b>
+
+3.1 The Visitor agrees to:
+(a) keep all Confidential Information strictly confidential.
+(b) not disclose any Confidential Information to any third party.
+(c) not disclose, discuss, share or publish any Confidential Information in any form (including verbally, online, via messaging apps, or social media).
+(d) not use any Confidential Information for any purpose other than attending the visit.
+(e) comply with all no-recording requirements, including:
+  (i) no photography, filming, or audio recording;
+  (ii) no copying, removal, or retention of any documents, materials, or digital content;
+unless the Company gives express written permission.
+
+3.2 These obligations apply during the visit and after it ends.
+
+<b>4. Intellectual Property</b>
+
+All intellectual property rights in materials, content, or information encountered during the visit remain the property of the Company (or its licensors). Nothing in this Acknowledgement grants the Visitor any rights to such material.
+
+<b>5. Duration</b>
+
+This Acknowledgement remains in effect for the duration of the visit and thereafter unless and until the relevant Confidential Information enters the public domain through no fault of the Visitor.
+
+<b>6. Consequences of Unauthorised Disclosure</b>
+
+The Visitor acknowledges that unauthorised use or disclosure of Confidential Information may cause harm to the Company. The Company reserves all rights and remedies available at law.
+
+<b>7. Governing Law</b>
+
+This Acknowledgement is governed by the laws of England and Wales. The courts of England and Wales have exclusive jurisdiction over any dispute arising out of or in connection with it.
+        </div>
+        <div id="scrollMsg">↓ Please scroll to read the full agreement</div>
+        <div id="agreeRow">
+          <input type="checkbox" id="agreeCheck" onchange="updateSignBtn()">
+          <label for="agreeCheck">I have read and agree to the Versa Studios Visitor Confidentiality Acknowledgement</label>
+        </div>
+        <div id="errorMsg2"></div>
+        <button class="btn-secondary" onclick="goToDetails()">← Back</button>
+        <button class="btn-primary" id="continueToSig" onclick="goToSignature()" disabled>Continue to Sign</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Signature -->
+    <div class="screen" id="screen3">
+      <div class="card">
+        <h2>Sign the Agreement</h2>
+        <p>Type your full name below as your electronic signature to confirm your agreement.</p>
+        <div class="sig-field">
+          <label>Electronic Signature <span class="required">*</span></label>
+          <input id="sigInput" type="text" placeholder="Type your full name" autocapitalize="words" oninput="updateSubmitBtn()">
+          <div class="sig-note">By typing your name you are signing this agreement electronically</div>
+        </div>
+        <div id="errorMsg3"></div>
+        <button class="btn-secondary" onclick="goToNDA()">← Back</button>
+        <button class="btn-primary" id="submitBtn" onclick="submitRegistration()" disabled>Complete Registration</button>
+      </div>
+    </div>
+
+    <!-- Success -->
+    <div id="successScreen">
+      <div class="tick">✅</div>
+      <h2>Registration Complete</h2>
+      <p>Thank you, <strong id="successName"></strong>.<br><br>
+      Your details and confidentiality agreement have been recorded.<br><br>
+      When you arrive at the studio, simply search your name on the sign-in screen and tap <strong>In</strong>.</p>
+    </div>
+  </div>
+
+  <script>
+    var regData = {};
+
+    function showScreen(n) {
+      document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+      document.getElementById('screen'+n).classList.add('active');
+      // Update steps
+      for (var i = 1; i <= 3; i++) {
+        var el = document.getElementById('step'+i);
+        el.classList.remove('active','done');
+        if (i < n) el.classList.add('done');
+        if (i === n) el.classList.add('active');
+      }
+      window.scrollTo(0,0);
+    }
+
+    function goToDetails() { showScreen(1); }
+
+    function goToNDA() {
+      var name = document.getElementById('regName').value.trim();
+      var job = document.getElementById('regJob').value.trim();
+      var email = document.getElementById('regEmail').value.trim();
+      var err = document.getElementById('errorMsg');
+      if (!name) { err.textContent = 'Please enter your full name.'; return; }
+      if (!job) { err.textContent = 'Please enter your job title.'; return; }
+      if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email address.'; return; }
+      err.textContent = '';
+      regData.name = name;
+      regData.jobTitle = job;
+      regData.company = document.getElementById('regCompany').value.trim();
+      regData.email = email;
+      regData.phone = document.getElementById('regPhone').value.trim();
+      showScreen(2);
+      // Show scroll message until they scroll to bottom
+      var box = document.getElementById('ndaBox');
+      box.addEventListener('scroll', function() {
+        if (box.scrollTop + box.clientHeight >= box.scrollHeight - 20) {
+          document.getElementById('scrollMsg').style.display = 'none';
+        }
+      });
+    }
+
+    function updateSignBtn() {
+      document.getElementById('continueToSig').disabled = !document.getElementById('agreeCheck').checked;
+    }
+
+    function goToSignature() {
+      if (!document.getElementById('agreeCheck').checked) {
+        document.getElementById('errorMsg2').textContent = 'Please read and agree to the agreement first.';
+        return;
+      }
+      document.getElementById('errorMsg2').textContent = '';
+      showScreen(3);
+    }
+
+    function updateSubmitBtn() {
+      var sig = document.getElementById('sigInput').value.trim();
+      document.getElementById('submitBtn').disabled = sig.length < 2;
+    }
+
+    async function submitRegistration() {
+      var sig = document.getElementById('sigInput').value.trim();
+      var name = regData.name;
+      if (!sig) { document.getElementById('errorMsg3').textContent = 'Please type your full name to sign.'; return; }
+      if (sig.toLowerCase() !== name.toLowerCase()) {
+        document.getElementById('errorMsg3').textContent = 'Your signature must match your full name: ' + name;
+        return;
+      }
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').textContent = 'Submitting...';
+      try {
+        var r = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: regData.name,
+            jobTitle: regData.jobTitle,
+            company: regData.company,
+            email: regData.email,
+            phone: regData.phone,
+            signature: sig,
+            isVisitor: false
+          })
+        });
+        var data = await r.json();
+        if (data.error) {
+          document.getElementById('errorMsg3').textContent = data.error;
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('submitBtn').textContent = 'Complete Registration';
+          return;
+        }
+        // Success
+        document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+        document.getElementById('steps').style.display = 'none';
+        document.getElementById('successName').textContent = regData.name;
+        document.getElementById('successScreen').style.display = 'block';
+        window.scrollTo(0,0);
+      } catch(e) {
+        document.getElementById('errorMsg3').textContent = 'Could not submit. Please try again.';
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').textContent = 'Complete Registration';
+      }
+    }
+  </script>
+</body>
+</html>

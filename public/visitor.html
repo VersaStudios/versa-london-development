@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Visitor Sign In — Versa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f5f5f3; font-family: Arial, sans-serif;
+      min-height: 100vh; padding: 0 0 40px;
+    }
+
+    /* Top bar */
+    #topBar {
+      background: #1a1a1a; padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #topBar img { height: 36px; display: block; cursor: pointer; }
+    #topBar h1 { color: white; font-family: 'Bebas Neue', Arial; font-size: 22px; letter-spacing: 0.05em; }
+    #backHome {
+      color: rgba(255,255,255,0.6); font-size: 14px; cursor: pointer;
+      background: none; border: none; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Progress steps */
+    #steps { display: flex; gap: 6px; padding: 16px 20px 0; max-width: 600px; margin: 0 auto; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: #ddd; transition: background 0.3s; }
+    .step.active { background: #1a1a1a; }
+    .step.done { background: #4CAF50; }
+
+    #container { max-width: 600px; margin: 0 auto; padding: 16px 20px; }
+
+    .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    .card h2 { font-size: 22px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; font-family: 'Bebas Neue', Arial; letter-spacing: 0.03em; }
+    .card p { font-size: 14px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
+    .field input {
+      width: 100%; padding: 16px 18px; border: 2px solid #e0e0e0; border-radius: 12px;
+      font-size: 18px; outline: none; transition: border-color 0.2s;
+      -webkit-user-select: text;
+    }
+    .field input:focus { border-color: #1a1a1a; }
+    .required { color: #c00; }
+
+    /* NDA */
+    #ndaBox {
+      background: #fafafa; border: 1px solid #e0e0e0; border-radius: 12px;
+      padding: 20px; height: 400px; overflow-y: auto;
+      font-size: 14px; line-height: 1.9; color: #333;
+      white-space: pre-wrap; margin-bottom: 16px;
+      font-family: 'Georgia', serif;
+      -webkit-overflow-scrolling: touch;
+    }
+    #scrollMsg { font-size: 13px; color: #888; text-align: center; margin-bottom: 12px; padding: 8px; background: #fff8e1; border-radius: 8px; }
+    #agreeRow { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; padding: 16px; background: #f5f5f3; border-radius: 12px; }
+    #agreeCheck { width: 24px; height: 24px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #1a1a1a; }
+    #agreeRow label { font-size: 15px; color: #333; line-height: 1.5; cursor: pointer; font-weight: bold; }
+
+    /* Signature */
+    .sig-wrap { margin-bottom: 16px; }
+    .sig-wrap label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 6px; }
+    .sig-input {
+      width: 100%; padding: 16px 18px; border: 2px solid #e0e0e0; border-radius: 12px;
+      font-size: 24px; font-family: 'Georgia', cursive; outline: none;
+      transition: border-color 0.2s; color: #1a1a1a; -webkit-user-select: text;
+    }
+    .sig-input:focus { border-color: #1a1a1a; }
+    .sig-note { font-size: 12px; color: #aaa; margin-top: 6px; }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%; padding: 18px; font-size: 22px;
+      background: #1a1a1a; color: white; border: none; border-radius: 14px;
+      cursor: pointer; font-family: 'Bebas Neue', Arial;
+      letter-spacing: 0.05em; transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-primary:not(:disabled):active { opacity: 0.8; }
+    .btn-back {
+      width: 100%; padding: 14px; font-size: 15px; margin-bottom: 10px;
+      background: transparent; color: #888; border: 2px solid #e0e0e0;
+      border-radius: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #errorMsg { font-size: 14px; color: #c00; min-height: 1.2em; margin-bottom: 10px; text-align: center; }
+
+    /* Timer bar */
+    #timerBar { position: fixed; bottom: 0; left: 0; height: 4px; background: #1a1a1a; width: 100%; transform-origin: left; transition: transform 1s linear; z-index: 100; }
+
+    /* Success */
+    #successScreen { display: none; text-align: center; padding: 60px 24px; }
+    #successScreen .tick { font-size: 80px; margin-bottom: 20px; }
+    #successScreen h2 { font-size: 40px; font-family: 'Bebas Neue', Arial; letter-spacing: 0.05em; margin-bottom: 10px; }
+    #successScreen p { font-size: 16px; color: #666; line-height: 1.6; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+  <div id="topBar">
+    <img src="Versa Logo.png" alt="Versa" onclick="window.location.href='index.html'">
+    <h1>Visitor Sign In</h1>
+    <button id="backHome" onclick="window.location.href='index.html'">Cancel</button>
+  </div>
+
+  <div id="steps">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+  </div>
+
+  <div id="container">
+
+    <!-- Screen 1: Details -->
+    <div class="screen active" id="screen1">
+      <div class="card">
+        <h2>Your Details</h2>
+        <p>Please fill in your information to sign in as a visitor.</p>
+        <div class="field">
+          <label>Full Name <span class="required">*</span></label>
+          <input id="visName" type="text" placeholder="e.g. John Smith" autocomplete="new-password" autocorrect="off" autocapitalize="words" inputmode="text">
+        </div>
+        <div class="field">
+          <label>Company <span class="required">*</span></label>
+          <input id="visCompany" type="text" placeholder="e.g. BBC" autocomplete="new-password" autocapitalize="words" inputmode="text">
+        </div>
+        <div class="field">
+          <label>Email Address <span class="required">*</span></label>
+          <input id="visEmail" type="email" placeholder="e.g. john@example.com" autocomplete="new-password" inputmode="email">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input id="visPhone" type="tel" placeholder="e.g. 07700 900000" autocomplete="new-password" inputmode="tel">
+        </div>
+        <div id="errorMsg"></div>
+        <button class="btn-primary" onclick="goToNDA()">Continue</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: NDA -->
+    <div class="screen" id="screen2">
+      <div class="card">
+        <h2>Confidentiality Agreement</h2>
+        <p>Please read the full agreement below carefully.</p>
+        <div id="ndaBox"><b>VERSA STUDIOS</b>
+<b>Visitor Confidentiality Acknowledgement</b>
+
+Company: Versa London Studios Limited
+Studio Location: Versa London Studios, 6 Atherton Street, London, M3 3GS
+
+<b>1. Purpose of this Acknowledgement</b>
+
+1.1 This Visitor Confidentiality Acknowledgement ("Acknowledgement") applies to all visitors to the Company's studios. Its purpose is to ensure that any confidential or sensitive information seen, heard, or otherwise encountered during the visit is protected.
+
+1.2 By signing below, the Visitor confirms they understand and agree to the terms set out in this Acknowledgement.
+
+<b>2. Confidential Information</b>
+
+2.1 "Confidential Information" includes any information relating to the Company's business, operations, clients, projects, creative content, technical processes, financial information, staff discussions, or any other information which is:
+(a) not publicly available; or
+(b) marked or described as confidential; or
+(c) which a reasonable person would understand to be confidential.
+
+2.2 Confidential Information may be communicated verbally, visually, in writing, electronically, or in any other form.
+
+<b>3. Visitor Obligations</b>
+
+3.1 The Visitor agrees to:
+(a) keep all Confidential Information strictly confidential.
+(b) not disclose any Confidential Information to any third party.
+(c) not disclose, discuss, share or publish any Confidential Information in any form (including verbally, online, via messaging apps, or social media).
+(d) not use any Confidential Information for any purpose other than attending the visit.
+(e) comply with all no-recording requirements, including:
+  (i) no photography, filming, or audio recording;
+  (ii) no copying, removal, or retention of any documents, materials, or digital content;
+unless the Company gives express written permission.
+
+3.2 These obligations apply during the visit and after it ends.
+
+<b>4. Intellectual Property</b>
+
+All intellectual property rights in materials, content, or information encountered during the visit remain the property of the Company (or its licensors). Nothing in this Acknowledgement grants the Visitor any rights to such material.
+
+<b>5. Duration</b>
+
+This Acknowledgement remains in effect for the duration of the visit and thereafter unless and until the relevant Confidential Information enters the public domain through no fault of the Visitor.
+
+<b>6. Consequences of Unauthorised Disclosure</b>
+
+The Visitor acknowledges that unauthorised use or disclosure of Confidential Information may cause harm to the Company. The Company reserves all rights and remedies available at law.
+
+<b>7. Governing Law</b>
+
+This Acknowledgement is governed by the laws of England and Wales. The courts of England and Wales have exclusive jurisdiction over any dispute arising out of or in connection with it.</div>
+        <div id="scrollMsg">↓ Please scroll to read the full agreement before agreeing</div>
+        <div id="agreeRow">
+          <input type="checkbox" id="agreeCheck" onchange="updateContinueBtn()">
+          <label for="agreeCheck">I have read and agree to the Versa Studios Visitor Confidentiality Acknowledgement</label>
+        </div>
+        <div id="errorMsg2"></div>
+        <button class="btn-back" onclick="goToDetails()">← Back</button>
+        <button class="btn-primary" id="continueBtn" onclick="goToSignature()" disabled>Continue to Sign</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Signature -->
+    <div class="screen" id="screen3">
+      <div class="card">
+        <h2>Sign the Agreement</h2>
+        <p>Type your full name exactly as you entered it to sign electronically.</p>
+        <div class="sig-wrap">
+          <label>Electronic Signature <span class="required">*</span></label>
+          <input class="sig-input" id="sigInput" type="text" placeholder="Type your full name" autocorrect="off" autocapitalize="words" oninput="updateSubmitBtn()">
+          <div class="sig-note">By typing your name you are signing this agreement electronically. This is a legally binding signature.</div>
+        </div>
+        <div id="errorMsg3"></div>
+        <button class="btn-back" onclick="goToNDA()">← Back</button>
+        <button class="btn-primary" id="submitBtn" onclick="submitVisitor()" disabled>Sign In</button>
+      </div>
+    </div>
+
+    <!-- Success -->
+    <div id="successScreen">
+      <div class="tick">✅</div>
+      <h2>Welcome,<br><span id="successName"></span>!</h2>
+      <p>Your details and confidentiality agreement have been recorded.<br><br>You are now signed in. This screen will return to the home page shortly.</p>
+    </div>
+
+  </div>
+
+  <div id="timerBar" style="transform:scaleX(0)"></div>
+
+  <script>
+    var visData = {};
+
+    function showScreen(n) {
+      document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+      document.getElementById('screen'+n).classList.add('active');
+      for (var i = 1; i <= 3; i++) {
+        var el = document.getElementById('step'+i);
+        el.classList.remove('active','done');
+        if (i < n) el.classList.add('done');
+        if (i === n) el.classList.add('active');
+      }
+      window.scrollTo(0,0);
+    }
+
+    function goToDetails() { showScreen(1); }
+
+    function goToNDA() {
+      var name = document.getElementById('visName').value.trim();
+      var company = document.getElementById('visCompany').value.trim();
+      var email = document.getElementById('visEmail').value.trim();
+      var err = document.getElementById('errorMsg');
+      if (!name) { err.textContent = 'Please enter your full name.'; return; }
+      if (!company) { err.textContent = 'Please enter your company name.'; return; }
+      if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email address.'; return; }
+      err.textContent = '';
+      visData.name = name;
+      visData.company = company;
+      visData.email = email;
+      visData.phone = document.getElementById('visPhone').value.trim();
+      showScreen(2);
+      var box = document.getElementById('ndaBox');
+      box.addEventListener('scroll', function() {
+        if (box.scrollTop + box.clientHeight >= box.scrollHeight - 30) {
+          document.getElementById('scrollMsg').style.display = 'none';
+        }
+      });
+    }
+
+    function updateContinueBtn() {
+      document.getElementById('continueBtn').disabled = !document.getElementById('agreeCheck').checked;
+    }
+
+    function goToSignature() {
+      if (!document.getElementById('agreeCheck').checked) {
+        document.getElementById('errorMsg2').textContent = 'Please read and agree to the agreement first.';
+        return;
+      }
+      document.getElementById('errorMsg2').textContent = '';
+      showScreen(3);
+    }
+
+    function updateSubmitBtn() {
+      var sig = document.getElementById('sigInput').value.trim();
+      document.getElementById('submitBtn').disabled = sig.length < 2;
+    }
+
+    async function submitVisitor() {
+      var sig = document.getElementById('sigInput').value.trim();
+      if (!sig) { document.getElementById('errorMsg3').textContent = 'Please type your full name to sign.'; return; }
+      if (sig.toLowerCase() !== visData.name.toLowerCase()) {
+        document.getElementById('errorMsg3').textContent = 'Signature must match your full name: ' + visData.name;
+        return;
+      }
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').textContent = 'Signing in...';
+      try {
+        var r = await fetch('/api/visitor-signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: visData.name,
+            company: visData.company,
+            email: visData.email,
+            phone: visData.phone,
+            signature: sig,
+            isVisitor: true
+          })
+        });
+        var data = await r.json();
+        if (data.error) {
+          document.getElementById('errorMsg3').textContent = data.error;
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('submitBtn').textContent = 'Sign In';
+          return;
+        }
+        // Show success then redirect to welcome screen
+        document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+        document.getElementById('steps').style.display = 'none';
+        document.getElementById('successName').textContent = visData.name;
+        document.getElementById('successScreen').style.display = 'block';
+        sessionStorage.setItem('visitorName', visData.name);
+        sessionStorage.setItem('isNewVisitor', 'true');
+        // Redirect to page4 after 2 seconds
+        setTimeout(function(){ window.location.href = 'page4.html'; }, 2000);
+      } catch(e) {
+        document.getElementById('errorMsg3').textContent = 'Could not submit. Please try again.';
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').textContent = 'Sign In';
+      }
+    }
+
+    // Inactivity timer
+    var timer, timeLeft = 120; // 2 minutes for visitor flow
+    var bar = document.getElementById('timerBar');
+    bar.style.transform = 'scaleX(1)';
+    function resetTimer() {
+      clearInterval(timer); timeLeft = 120; bar.style.transform = 'scaleX(1)';
+      timer = setInterval(function() {
+        timeLeft--; bar.style.transform = 'scaleX('+(timeLeft/120)+')';
+        if (timeLeft <= 0) { clearInterval(timer); window.location.href = 'index.html'; }
+      }, 1000);
+    }
+    document.addEventListener('touchstart', resetTimer);
+    resetTimer();
+  </script>
+</body>
+</html>
